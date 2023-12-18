@@ -56,9 +56,9 @@ int main() {
 				if (mode == 2)
 					b = rand() % 255;
 				if (mode == 3)
-					file << rand() % 255 << "  " << rand() % 255 << "  " << rand() % 255 << "  ";
+					file << rand() % 255 << " " << rand() % 255 << " " << rand() % 255 << "  ";
 				else
-					file << i << "  " << j << "  " << b << "  ";
+					file << i << " " << j << " " << b << "  ";
 			}
 		}
 		file.close();
