@@ -70,6 +70,7 @@ int main() {
 	cout << "\n\n[T] PELNY CZAS: " << countTime(start, clock()) << "ms\n[T] CZAS GENEROWANIA PLIKU: ";
 	if (!genFailed) cout << countTime(startGen, endGen) << "ms";
 	else cout << "FAILED";
-	cout << "\n---------------------------------";
+	cout << "\n---------------------------------\n\n(Wpisz cokolwiek i kliknij enter, by kontynuowac...) ";
+	cin >> x;
 	return 0;
 }
