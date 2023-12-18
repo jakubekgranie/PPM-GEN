@@ -14,6 +14,8 @@ It contains 4 modes:
 
 Invalid mode input defaults to the first option.
 
+Only the polish language is supported at the moment.
+
 ## Requirements
 To run the uncompiled version, one must have a .cpp compiler in order to create an executable.
 Also, the program must be allowed to manipulate files in its directory, due to it creating and operating on the 'bitmap.pph' file.
