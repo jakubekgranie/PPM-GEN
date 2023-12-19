@@ -16,8 +16,7 @@ double countTime(clock_t start, clock_t end) {
         return (double)(end - start) / CLOCKS_PER_SEC * 1000;
 }
 int main() {
-
-
+        srand(time(NULL));
         clock_t start = clock(), startGen, endGen;
         fstream file;
         file.open("bitmap.ppm", ios::out);
@@ -51,7 +50,7 @@ int main() {
         cout << "\n[GEN] Trwa generowanie pliku .ppm. Prosze czekac.\n";
         startGen = clock();
         if (file.good()) {
-                file << "# Jakub Namyslak, 2023\n# https://shatterwares.com\n\nP3 # header\n" << y << " " << x << " # wysokosc, szerokosc (rzedy, kolumny)\n255 # przestrzen kolorow\n";
+                file << "P3\n" << y << " " << x <<"\n255\n";
                 for (int i = 0; i < y; i++) {
                         file << "\n";
                         for (int j = 0; j < x; j++) {
