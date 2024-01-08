@@ -8,6 +8,7 @@
 #include <vector> // case 3; logika zachowywania dzialania \n
 
 using namespace std;
+// pliki zamiast inputu
 
 /*
     (C) Jakub Namyslak, 01.01.2024
@@ -18,6 +19,12 @@ using namespace std;
     - https://github.com/jakubekgranie
 */
 
+int fromBinary(string binaries) {
+    char num = 0;
+    for (int i = 6; i > -1; i--)
+        num = num + ((binaries[i] - '0') << (6 - i));
+    return num;
+}
 void fixCIN() {
     cin.clear();
     cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -80,23 +87,23 @@ bool protectedChoiceLoop(string pre, string errPrefix) {
 }
 int protectedMeasurementLoop(string pre, string errPrefix) {
     int measurement = -1;
-    while (measurement < 0 || measurement > 256) {
+    while (measurement < 0) {
         cout << pre;
         cin >> measurement;
         if (cin.fail()) {
             measurement = -1;
             fixCIN();
         }
-        if (measurement < 0 || measurement > 256)
+        if (measurement < 0)
             cout << errPrefix << " Nieprawidlowe dane wejsciowe. Sprobuj ponownie.\n";
     }
     return measurement;
 }
-string testInputCompat(int max, bool& reset) {
+string testInputCompat(unsigned long long max, bool& reset) {
     cout << "\n[STR] Podaj dane. Stosuj '\\n' jako delimiter linii.\n[STR]> ";
     string input;
     getline(cin >> ws, input);
-    if (input.length() * 7 > max && !protectedChoiceLoop("\n[GEN] UWAGA: wykryto dane o wielkosci zbyt duzej jak na podany nosnik. W wyniku konynuowania operacji wystapic moga komplikacje zwiazane z utrata zapisu. Kontynuowac? [Y/N]\n[GEN]> ", "[GEN]")) {
+    if (input.length() * 7 + 21 > max && !protectedChoiceLoop("\n[GEN] UWAGA: wykryto dane o wielkosci zbyt duzej jak na podany nosnik. W wyniku konynuowania operacji wystapic moga komplikacje zwiazane z utrata zapisu. Kontynuowac? [Y/N]\n[GEN]> ", "[GEN]")) {
         reset = true;
         cout << "\n";
     }
@@ -107,7 +114,7 @@ void typeErrorCheck(string raw) {
         int test = stoi(raw);
     }
     catch (const invalid_argument&) {
-        cerr << "\n[C_ERR][1] Plik uszkodzony: wykryto niewlasciwe dane. Skonsultuj sie z autorem.\n";
+        cerr << "\n[C_ERR][1] Plik uszkodzony: wykryto niewlasciwe dane. Skonsultuj sie z autorem.\nNieoczekiwana wartosc: |" << raw << "|";
         exit(1);
     }
     catch (...) {
@@ -116,7 +123,9 @@ void typeErrorCheck(string raw) {
     }
 }
 string additionalEncryptionGen(string data) {
-    int appearances[95] = { 0 };
+    int appearances[95];
+    for (size_t i = 0; i < 95; i++)
+        appearances[i] = 0;
     string baseKey, encKey, name;
     fstream file;
     for (int i = 32; i < 127; i++) {
@@ -126,7 +135,9 @@ string additionalEncryptionGen(string data) {
         } while (charCode == appearances[charCode - 32]);
         appearances[charCode - 32] = charCode;
         baseKey += charCode;
-        int appearances2[95] = { 0 };
+        int appearances2[95];
+        for (size_t j = 0; j < 95; j++)
+            appearances2[j] = 0;
         for (int j = 32; j < 127; j++) {
             char charCode;
             do {
@@ -146,7 +157,7 @@ string additionalEncryptionGen(string data) {
     }*/
     for (int i = 0; i < data.length(); i++)
         encKey += rand() % 95 + 32;
-    for (size_t i = 0; i < encKey.length(); i++)
+    for (size_t i = 0; i < encKey.length(); i++) 
         for (size_t j = 0; j < baseKey.length(); j += 96) {
             bool wasEncoded = false;
             if (encKey[i] == baseKey[j])
@@ -171,6 +182,7 @@ int main() {
     clock_t start = clock();
     string comms[2] = { "\n[NAME] Podaj nazwe pliku:\n[NAME]> ", "[NAME] Blad dostepu do pliku. Sprobuj ponownie.\n" }, tmp;
     fstream file;
+    int rgb[3] = { -1, -1, -1 };
     bool reset = false;
     int opType = 0;
     cout << "---------------------------------";
@@ -190,16 +202,16 @@ int main() {
         tmp = testStream(ios::out, comms[0], comms[1]);
         file.open(tmp, ios::out);
         break;
-    case 2:
+    case 2: 
         tmp = testStream(ios::in, comms[0], comms[1]);
-        file.open(tmp, ios::in);
+        file.open(tmp, ios::in); 
         break;
-    case 3:
+    case 3: 
         tmp = testStream(ios::in, comms[0], comms[1]);
-        file.open(tmp, ios::in);
+        file.open(tmp, ios::in); 
         break;
     }
-    if (file.good()) {
+    if(file.good()){
         clock_t startGen, endGen;
         bool genFailed = false;
         switch (opType) {
@@ -207,6 +219,7 @@ int main() {
         {
             string data = "", binaries;
             int y = protectedMeasurementLoop("\nPodaj wysokosc (h e <0, 255>) :\n[H]> ", "[H]>"), x = protectedMeasurementLoop("\nPodaj szerokosc (h e <0, 255>) :\n[H]> ", "[W]>"), b, mode;
+            bool rgbState = false;
             b = mode = 0;
             while (mode < 1 || mode > 5) {
                 cout << "\nWybierz tryb:\n1) Standardowy (B = 0)\n2) Pollosowy (B e <0, 255>)\n3) Losowy (R && G && B e <0, 255>)\n4) Wlasny (B jest wybierane manualnie)\n5) Zapis (Napis konwertowany jest na liczbe binarna i zapisywany w b)\n\n[TRYB]> ";
@@ -219,16 +232,29 @@ int main() {
                     cout << "[TRYB] Nieprawidlowe dane wejsciowe. Sprobuj ponownie.\n";
             }
             if (mode == 4) {
-                b = protectedMeasurementLoop("\nPodaj B (e <0, 255>).\n[B]> ", "[B]");
+                b = protectedMeasurementLoop("\nPodaj B (e <0, 255>).\n[B]> ", "[B]") % 256;
                 mode = 1;
             }
             if (mode == 5) {
-                data = testInputCompat(x * y, reset);
+                for (size_t i = 0; i < 3; i++) {
+                    string letter = "RGB";
+                    cout << "\n[" << letter[i] << "] Podaj " << letter[i] << " (e <0, 7>)\n[" << letter[i] << "]> ";
+                    cin >> rgb[i];
+                    if (cin.fail()) {
+                        rgb[i] = -1;
+                        fixCIN();
+                    }
+                    if (rgb[i] < 0 || rgb[i] > 7) {
+                        cout << "[" << letter[i] << "] Nieprawidlowe dane wejsciowe. Sprobuj ponownie.\n";
+                        i--;
+                    }
+                }
+                data = testInputCompat(x * y * (rgb[0] + rgb[1] + rgb[2]), reset);
                 if (reset) {
                     main();
                     return 0;
                 }
-                if (protectedChoiceLoop("\n[ENC] Czy wlaczyc tryb dwukrotnego szyfrowania? [Y/N]\n[ENC]> ", "[ENC]> "))
+                if (protectedChoiceLoop("\n[ENC] Czy wlaczyc tryb dwukrotnego szyfrowania? [Y/N]\n[ENC]> ", "[ENC]>"))
                     data = additionalEncryptionGen(data);
             }
             cout << "\n[GEN] Trwa generowanie pliku .ppm. Prosze czekac.\n";
@@ -236,20 +262,44 @@ int main() {
             file << "P3\n" << y << " " << x << "\n255\n";
             for (int i = 0; i < y; i++) {
                 for (int j = 0; j < x; j++) {
-                    if (mode == 5 && (data.length() > 0 || binaries.length() > 0)) {
-                        if (binaries.length() == 0) {
-                            binaries = toBinary(data[0]);
-                            data.erase(0, 1);
+                    if (mode == 5) {
+                        string raw[3] = { toBinary(i % 256), toBinary(j % 256), "0000000"};
+                        if (rgbState) {
+                            //cout << "\n=== INDEX " << i << "." << j << "\nBINARIES: " << binaries << endl; // [DEBUG]
+                            for (size_t k = 0; k < 3; k++)
+                                for (size_t l = 7 - rgb[k]; l < 7; l++) {
+                                    if (binaries.length() == 0) {
+                                        //cout << "\n[" << k << "] No bin remaining. Converting "; // [DEBUG]
+                                        if (data.length() > 0) {
+                                            //cout << data[0] << " to " << toBinary(data[0]) << "\n\n"; // [DEBUG]
+                                            binaries = toBinary(data[0]);
+                                            data.erase(0, 1);
+                                        }
+                                        else {
+                                            binaries = "0000000";
+                                            //cout << "default to 0000000\n"; // [DEBUG]
+                                        }
+                                    }
+                                    //cout << "Raw " << k << " (" << raw[k] << ") changed to "; // [DEBUG]
+                                    raw[k][l] = binaries[0];
+                                    //cout << raw[k] << " (index " << l << " affected)\n"; // [DEBUG]
+                                    if(binaries != "0000000")
+                                        binaries.erase(0, 1);
+                                    //else
+                                        //cout << "Reduction omitted: binaries are a placeholder.\n"; // [INVIS_HOOK]
+                                }
+                            file << fromBinary(raw[0]) << " " << fromBinary(raw[1]) << " " << fromBinary(raw[2]) << "  "; // encapsulate
                         }
-                        file << i << " " << j << " " << binaries[0] << "  ";
-                        binaries.erase(0, 1);
-                        if (data.length() == 0 && binaries.length() == 0)
-                            continue;
+                        else {
+                            file << rgb[0] << " " << rgb[1] << " " << rgb[2] << "  ";
+                            rgbState = true;
+                        }
+                        //cout << "===\n"; // [DEBUG]
                     }
                     if (mode == 2)
                         b = rand() % 256;
-                    if (mode == 1 || mode == 2 || (mode == 5 && data.length() == 0 && binaries.length() == 0))
-                        file << i << " " << j << " " << b << "  ";
+                    if (mode == 1 || mode == 2)
+                        file << i % 256 << " " << j % 256 << " " << b << "  ";
                     if (mode == 3)
                         file << rand() % 256 << " " << rand() % 256 << " " << rand() % 256 << "  ";
                 }
@@ -266,55 +316,56 @@ int main() {
         }
         case 2:
         {
-            int linesRemaining = 3;
+            int linesRemaining = 3, rgbIndex = 0;
             string data, contents, binaries, final;
             startGen = clock();
             while (getline(file, contents)) {
-                size_t len = contents.length(); // -1, size_t
+                size_t len = contents.length();
                 if (linesRemaining == 0 && len > 4) { // 5 to minimum (X X X)
-                    size_t charIndex = 0; //size_t - nie testowano
+                    size_t charIndex = 0;
                     while (charIndex < len) {
-                        string raw;
-                        int rawInt;
-                        for (int i = 0; i < 2; i++) {
-                            while (charIndex < len && contents[charIndex] == ' ') charIndex++;
-                            while (charIndex < len && contents[charIndex] != ' ') charIndex++;
-                        }
-                        while (charIndex < len && contents[charIndex] == ' ') charIndex++;
                         for (int i = 0; i < 3; i++) {
-                            if (charIndex < len && isdigit(contents[charIndex])) {
-                                raw = raw + contents[charIndex];
-                                charIndex++;
+                            string raw;
+                            while (charIndex < len && contents[charIndex] == ' ') charIndex++;
+                            for (int j = 0; j < 3; j++) {
+                                if (charIndex < len && isdigit(contents[charIndex])) {
+                                    raw += contents[charIndex];
+                                    charIndex++;
+                                }
+                                else break;
                             }
-                            else break;
-                        }
-                        if (binaries.length() == 0 && data.length() > 0) {
-                            binaries = toBinary(data[0]);
-                            data.erase(0, 1);
-                        }
-                        if (binaries.length() == 0)
-                            binaries = "0000000";
-                        if (raw.length() > 0) {
-                            typeErrorCheck(raw);
-                            rawInt = stoi(raw);
-                            char rawLast;
-                            bool hasBeenChanged = false;
-                            if (binaries[0] == '0' && rawInt % 2 != 0) {
-                                rawLast = raw[raw.length() - 1] - 1;
-                                hasBeenChanged = true;
+                            if (raw.length() > 0) {
+                                typeErrorCheck(raw);
+                                size_t rawSize = raw.length();
+                                raw = toBinary(stoi(raw));
+                                if (rgbIndex == 3) {
+                                    for (size_t j = 7 - rgb[i]; j < 7; j++) {
+                                        if (binaries.length() == 0 && data.length() > 0) {
+                                            binaries = toBinary(data[0]);
+                                            data.erase(0, 1);
+                                        }
+                                        if (binaries.length() == 0)
+                                            binaries = "0000000";
+                                        if (raw[j] != binaries[0])
+                                            raw[j] = binaries[0];
+                                        binaries.erase(0, 1);
+                                    }
+                                }
+                                else {
+                                    raw = toBinary(rgb[i]);
+                                    rgbIndex++;
+                                }
+                                string parsed = to_string(fromBinary(raw));
+                                contents.erase(charIndex - rawSize, rawSize);
+                                contents.insert(charIndex - rawSize, parsed);
+                                charIndex += parsed.length() - rawSize;
+                                len = contents.length();
                             }
-                            if (binaries[0] == '1' && rawInt % 2 == 0) {
-                                rawLast = raw[raw.length() - 1] + 1;
-                                hasBeenChanged = true;
-                            }
-                            if (hasBeenChanged)
-                                contents[charIndex - 1] = rawLast;
-                            binaries.erase(0, 1);
                         }
                     }
                 }
                 if (linesRemaining == 2) {
-                    int measurements[2] = { 0 };
+                    int measurements[2] = { 0, 0 };
                     size_t charIndex = 0;
                     for (int i = 0; i < 2; i++) {
                         string raw;
@@ -326,7 +377,20 @@ int main() {
                         typeErrorCheck(raw);
                         measurements[i] = stoi(raw);
                     }
-                    data = testInputCompat(measurements[0] * measurements[1], reset);
+                    for (size_t i = 0; i < 3; i++) {
+                        string letter = "RGB";
+                        cout << "\n[" << letter[i] << "] Podaj " << letter[i] << " (e <0, 7>)\n[" << letter[i] << "]> ";
+                        cin >> rgb[i];
+                        if (cin.fail()) {
+                            rgb[i] = -1;
+                            fixCIN();
+                        }
+                        if (rgb[i] < 0 || rgb[i] > 7) {
+                            cout << "[" << letter[i] << "] Nieprawidlowe dane wejsciowe. Sprobuj ponownie.\n";
+                            i--;
+                        }
+                    }
+                    data = testInputCompat(measurements[0] * measurements[1] * (rgb[0] + rgb[1] + rgb[2]), reset);
                     if (reset) {
                         main();
                         return 0;
@@ -376,31 +440,31 @@ int main() {
                 if (linesRemaining == 0 && contents.length() > 4) {
                     size_t charIndex = 0, len = contents.length() - 1;
                     while (charIndex < len) {
-                        string raw;
-                        for (int i = 0; i < 2; i++) {
-                            while (charIndex < len && contents[charIndex] == ' ') charIndex++;
-                            while (charIndex < len && contents[charIndex] != ' ') charIndex++;
-                        }
-                        while (charIndex < len && contents[charIndex] == ' ') charIndex++;
                         for (int i = 0; i < 3; i++) {
-                            if (charIndex < len && isdigit(contents[charIndex])) {
-                                raw = raw + contents[charIndex];
-                                charIndex++;
+                            string raw;
+                            while (charIndex < len && contents[charIndex] == ' ') charIndex++;
+                            for (int j = 0; j < 3; j++) {
+                                if (charIndex < len && isdigit(contents[charIndex])) {
+                                    raw += contents[charIndex];
+                                    charIndex++;
+                                }
+                                else break;
                             }
-                            else break;
-                        }
-                        if (raw.length() > 0) {
-                            typeErrorCheck(raw);
-                            if (stoi(raw) % 2 == 0)
-                                binaries = binaries + "0";
-                            else
-                                binaries = binaries + "1";
-                            if (binaries.length() == 7) {
-                                char num = 0;
-                                for (int i = 6; i > -1; i--)
-                                    num = num + ((binaries[i] - '0') << (6 - i));
-                                binaries = "";
-                                if (num > 31) final = final + num;
+                            if (raw.length() > 0) {
+                                if (rgb[i] == -1)
+                                    rgb[i] = stoi(raw);
+                                else {
+                                    typeErrorCheck(raw);
+                                    raw = toBinary(stoi(raw));
+                                    for (size_t j = 7 - rgb[i]; j < 7; j++) {
+                                        binaries += raw[j];
+                                        if (binaries.length() == 7) {
+                                            char num = fromBinary(binaries);
+                                            binaries = "";
+                                            if (num > 31) final += num;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -452,13 +516,13 @@ int main() {
                     parsedFinal.push_back("");
                     i += 2;
                 }
-            }
+             }
             endGen = clock();
             cout << "\nDane ========\n\n";
             cout << parsedFinal[0];
             for (int i = 1; i < parsedFinal.size(); i++)
                 cout << "\n" << parsedFinal[i];
-            cout << "\n\n=============\n";
+            cout <<"\n\n=============\n";
             if (protectedChoiceLoop("\n[READ-SAVE] Czy zapisac dane wyjsciowe w pliku zewnetrznym? [y/n]\n[READ]> ", "[READ-SAVE]")) {
                 tmp = testStream(ios::out, "\n[READ-SAVE] Podaj nazwe pliku.\n[READ]> ", "[READ-SAVE] Nieudana proba otwarcia pliku. Sprobuj ponownie.\n", ".txt");
                 file.open(tmp, ios::out);
